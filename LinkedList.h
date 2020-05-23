@@ -178,7 +178,6 @@ template<class ValueType>
 {
     Node* node = _firstNode;
     Node* nextNode = _firstNode->next;
-    size_t s = this->_size;
     while(nextNode != nullptr)
     {
         delete node;
