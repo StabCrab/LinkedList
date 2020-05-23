@@ -176,7 +176,16 @@ LinkedList<ValueType>& LinkedList<ValueType>::operator=(LinkedList&& moveList) n
 template<class ValueType>
  LinkedList<ValueType>:: ~LinkedList()
 {
-    forceNodeDelete(_firstNode);
+    Node* node = _firstNode;
+    Node* nextNode = _firstNode->next;
+    size_t s = this->_size;
+    while(nextNode != nullptr)
+    {
+        delete node;
+        node = nextNode;
+        nextNode = node->next;
+    }
+    delete node;
 }
 
 template<class ValueType>
@@ -369,16 +378,4 @@ template<class ValueType>
  size_t LinkedList<ValueType> :: size() const
 {
     return _size;
-}
-
-template<class ValueType>
-void LinkedList<ValueType>::forceNodeDelete(Node* node)
-{
-    if (node == nullptr) {
-        return;
-    }
-
-    Node* nextDeleteNode = node->next;
-    delete node;
-    forceNodeDelete(nextDeleteNode);
 }
