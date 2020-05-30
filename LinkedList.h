@@ -1,5 +1,5 @@
-
-// Created by trykr on 25.04.2020.
+//
+// Created by trykr on 30.05.2020.
 //
 #pragma once
 #include <cstdlib>
@@ -37,7 +37,7 @@ public:
     LinkedList(LinkedList&& moveList) noexcept;
     LinkedList& operator=(LinkedList&& moveList) noexcept;
 
-    virtual ~LinkedList();
+    ~LinkedList();
     ////
     // доступ к значению элемента по индексу
     ValueType& operator[](const size_t pos) const;
@@ -45,33 +45,33 @@ public:
 
     Node* getNode(const size_t pos) const;
     // вставка элемента по индексу, сначала ищем, куда вставлять (О(n)), потом вставляем (O(1))
-    virtual void insert(const size_t pos, const ValueType& value);
+    void insert(const size_t pos, const ValueType& value);
     // вставка элемента после узла, (O(1))
-    virtual void insertAfterNode(Node* node, const ValueType& value);
+    void insertAfterNode(Node* node, const ValueType& value);
     // вставка в конец (О(n))
-    virtual void pushBack(const ValueType& value);
+    void pushBack(const ValueType& value);
     // вставка в начало (О(1))
-    virtual void pushFront(const ValueType& value);
+    void pushFront(const ValueType& value);
 
     // удаление
-    virtual void remove(const size_t pos);
-    virtual void removeNextNode(Node* node);
-    virtual void removeFront();
-    virtual void removeBack();
+    void remove(const size_t pos);
+    void removeNextNode(Node* node);
+    void removeFront();
+    void removeBack();
 
     // поиск, О(n)
-    virtual long long int findIndex(ValueType& value) const;
-    virtual Node* findNode(ValueType& value) const;
+    long long int findIndex(ValueType& value) const;
+    Node* findNode(ValueType& value) const;
 
     // разворот списка
-    virtual void reverse();
-    virtual LinkedList reverse() const;// полчение нового списка (для константных объектов)
-    virtual LinkedList getReverseList() const; // чтобы неконстантный объект тоже мог возвращать новый развернутый список
+    void reverse();
+    LinkedList reverse() const;// полчение нового списка (для константных объектов)
+    LinkedList getReverseList() const; // чтобы неконстантный объект тоже мог возвращать новый развернутый список
 
-    virtual size_t size() const;
-private:
+    size_t size() const;
 
-    void forceNodeDelete(Node* node);
+    void print(); // этот метод нужен исключительно для отладки
+
 };
 
 template<class ValueType>
@@ -163,7 +163,7 @@ LinkedList<ValueType>& LinkedList<ValueType>::operator=(LinkedList&& moveList) n
     if (this == &moveList) {
         return *this;
     }
-    forceNodeDelete(_firstNode);
+    delete[] this;
     this->_size = moveList._size;
     this->_firstNode = moveList._firstNode;
 
@@ -174,7 +174,7 @@ LinkedList<ValueType>& LinkedList<ValueType>::operator=(LinkedList&& moveList) n
 }
 
 template<class ValueType>
- LinkedList<ValueType>:: ~LinkedList()
+LinkedList<ValueType>:: ~LinkedList()
 {
     Node* node = _firstNode;
     Node* nextNode = _firstNode->next;
@@ -212,7 +212,7 @@ class LinkedList<ValueType>::Node* LinkedList<ValueType>::getNode(const size_t p
 }
 
 template<class ValueType>
- void LinkedList<ValueType>::insert(const size_t pos, const ValueType& value)
+void LinkedList<ValueType>::insert(const size_t pos, const ValueType& value)
 {
     if (pos < 0) {
         assert(pos < 0);
@@ -247,13 +247,20 @@ void LinkedList<ValueType>::pushBack(const ValueType& value)
         pushFront(value);
         return;
     }
-    insert(_size, value);
+    else
+    {
+        Node *node = new Node(value, nullptr);
+        this->_lastNode->next = node;
+        this->_lastNode = _lastNode->next;
+    }
 }
 
 template<class ValueType>
 void LinkedList<ValueType>::pushFront(const ValueType& value)
 {
     _firstNode = new Node(value, _firstNode);
+    if (_size == 0 )
+        _lastNode = _firstNode;
     ++_size;
 }
 
@@ -357,7 +364,7 @@ void LinkedList<ValueType>:: reverse()
     _firstNode = currentNode;
 }
 template<class ValueType>
- LinkedList<ValueType> LinkedList<ValueType>:: reverse() const
+LinkedList<ValueType> LinkedList<ValueType>:: reverse() const
 {
     LinkedList reversedList = *this;
     reversedList.reverse();
@@ -374,7 +381,20 @@ LinkedList<ValueType> LinkedList<ValueType>:: getReverseList() const
 }
 
 template<class ValueType>
- size_t LinkedList<ValueType> :: size() const
+size_t LinkedList<ValueType> :: size() const
 {
     return _size;
 }
+
+template<class ValueType>
+void LinkedList<ValueType>::print()
+{
+    Node* node = this->_firstNode;
+    while(node->next != nullptr)
+    {
+        std::cout << node->value<< std::endl;
+        node = node->next;
+    }
+    std::cout << node->value<< std::endl;
+}
+
