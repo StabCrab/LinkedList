@@ -224,6 +224,8 @@ void LinkedList<ValueType>::insert(const size_t pos, const ValueType& value)
     if (pos == 0) {
         pushFront(value);
     }
+    if (pos == _size - 1)
+        pushBack(value);
     else{
         Node* bufNode = this->_firstNode;
         for (size_t i = 0; i < pos-1; ++i) {
