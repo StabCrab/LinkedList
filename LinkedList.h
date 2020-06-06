@@ -231,11 +231,11 @@ template<class ValueType>
 class LinkedList<ValueType>::Node* LinkedList<ValueType>::getNode(const size_t pos) const
 {
     if (pos < 0) {
-        throw std::runtime_error ("pos < 0");
+        throw std::out_of_range ("pos < 0");
 
     }
     else if (pos >= this->_size) {
-        throw std::runtime_error (pos >= this->_size);
+        throw std::out_of_range ("pos >= this->_size");
     }
 
     Node* bufNode = this->_firstNode;
@@ -250,10 +250,10 @@ template<class ValueType>
 void LinkedList<ValueType>::insert(const size_t pos, const ValueType& value)
 {
     if (pos < 0) {
-        throw std::runtime_error ("pos < 0");
+        throw std::out_of_range ("pos < 0");
     }
     else if (pos > this->_size) {
-        throw std::runtime_error ("pos > this->_size");
+        throw std::out_of_range ("pos > this->_size");
     }
 
     if (pos == 0) {
@@ -300,10 +300,10 @@ template<class ValueType>
 void LinkedList<ValueType>:: remove(const size_t pos)
 {
     if (pos < 0)
-        throw std::runtime_error("pos< 0");
+        throw std::out_of_range("pos< 0");
 
     if (pos > this->_size)
-        throw std::runtime_error ("pos > this->_size");
+        throw std::out_of_range ("pos > this->_size");
     if (pos == 0) {
         removeFront();
     }
@@ -428,4 +428,3 @@ void LinkedList<ValueType>::print()
     }
     std::cout << node->value<< std::endl;
 }
-
