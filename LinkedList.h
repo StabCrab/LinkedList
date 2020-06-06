@@ -12,23 +12,27 @@ public:
     struct Node{
     public:
         Node();
-        Node(const ValueType& value, Node* next = nullptr);
+        explicit Node(const ValueType& value, Node* next = nullptr);
         ~Node();
 
         void insertNext(const ValueType& value);
         void removeNext();
+
         ValueType value;
         Node* next;
+        void forceNodeDelete(Node* node);
     };
+
+private:
     Node* _firstNode;
     size_t	_size;
-    Node* _lastNode;
 
 // класс узла списка
 // по своей сути, может содержать любые данные,
 // можно реализовать и ассоциативный массив, просто добавив
 // поле с ключем в узел и, с учетом этого, поменять методы DoublyLinkedList
 // (доступ по ключу, поиск по ключу и т.д.)
+public:
     ////
     LinkedList();
     LinkedList(const LinkedList& copyList);
@@ -60,8 +64,8 @@ public:
     void removeBack();
 
     // поиск, О(n)
-    long long int findIndex(ValueType& value) const;
-    Node* findNode(ValueType& value) const;
+    long long int findIndex(const ValueType& value) const;
+    Node* findNode(const ValueType& value) const;
 
     // разворот списка
     void reverse();
@@ -77,8 +81,8 @@ public:
 template<class ValueType>
 LinkedList<ValueType>::Node::Node()
 {
+    this->value = ValueType();
     this->next = nullptr;
-    this->value = 0;
 }
 
 template<class ValueType>
@@ -108,6 +112,17 @@ void LinkedList<ValueType>::Node::removeNext()
 }
 
 template<class ValueType>
+void LinkedList<ValueType>::Node::forceNodeDelete(Node *node)
+{
+    if (node == nullptr) {
+        return;
+    }
+    Node* nextDeleteNode = node->next;
+    delete node;
+    forceNodeDelete(nextDeleteNode);
+}
+
+template<class ValueType>
 LinkedList<ValueType>::LinkedList()
 {
     _firstNode = nullptr;
@@ -118,18 +133,14 @@ template<class ValueType>
 LinkedList<ValueType>::LinkedList(const LinkedList& copyList)
 {
     this->_size = copyList._size;
-    if (this->_size == 0) {
-        this->_firstNode = nullptr;
-        return;
-    }
     this->_firstNode = new Node(copyList._firstNode->value);
 
     Node* currentNode = this->_firstNode;
     Node* currentCopyNode = copyList._firstNode;
 
     while (currentCopyNode->next) {
-        currentNode->next = new Node(currentCopyNode->value);
         currentCopyNode = currentCopyNode->next;
+        currentNode->next = new Node (currentCopyNode->value);
         currentNode = currentNode->next;
     }
 }
@@ -142,7 +153,20 @@ LinkedList<ValueType>& LinkedList<ValueType>:: operator=(const LinkedList& copyL
     }
     LinkedList bufList(copyList);
     this->_size = bufList._size;
-    this->_firstNode = bufList._firstNode;
+    if (this->_firstNode != nullptr)
+    {
+        _firstNode->forceNodeDelete(_firstNode);
+    }
+    this->_firstNode = new Node(bufList._firstNode->value);
+    Node* currentNode = this->_firstNode;
+    Node* currentCopyNode = copyList._firstNode;
+
+    while (currentCopyNode->next) {
+        currentCopyNode = currentCopyNode->next;
+        currentNode->next = new Node (currentCopyNode->value);
+        currentNode = currentNode->next;
+    }
+
 
     return *this;
 }
@@ -163,7 +187,7 @@ LinkedList<ValueType>& LinkedList<ValueType>::operator=(LinkedList&& moveList) n
     if (this == &moveList) {
         return *this;
     }
-    delete[] this;
+    _firstNode->forceNodeDelete(_firstNode);
     this->_size = moveList._size;
     this->_firstNode = moveList._firstNode;
 
@@ -176,15 +200,25 @@ LinkedList<ValueType>& LinkedList<ValueType>::operator=(LinkedList&& moveList) n
 template<class ValueType>
 LinkedList<ValueType>:: ~LinkedList()
 {
-    Node* node = _firstNode;
-    Node* nextNode = _firstNode->next;
-    while(nextNode != nullptr)
-    {
-        delete node;
-        node = nextNode;
-        nextNode = node->next;
-    }
-    delete node;
+    _firstNode->forceNodeDelete(this->_firstNode);
+//    if (_firstNode == nullptr)
+//    {
+//        return;
+//    }
+//    if (_firstNode->next == nullptr)
+//    {
+//        delete _firstNode;
+//        return;
+//    }
+//    Node* node = _firstNode;
+//    Node* nextNode = _firstNode->next;
+//    while(nextNode != nullptr)
+//    {
+//        delete node;
+//        node = nextNode;
+//        nextNode = node->next;
+//    }
+//    delete node;
 }
 
 template<class ValueType>
@@ -197,10 +231,11 @@ template<class ValueType>
 class LinkedList<ValueType>::Node* LinkedList<ValueType>::getNode(const size_t pos) const
 {
     if (pos < 0) {
-        assert(pos < 0);
+        throw std::runtime_error ("pos < 0");
+
     }
     else if (pos >= this->_size) {
-        assert(pos >= this->_size);
+        throw std::runtime_error (pos >= this->_size);
     }
 
     Node* bufNode = this->_firstNode;
@@ -215,24 +250,22 @@ template<class ValueType>
 void LinkedList<ValueType>::insert(const size_t pos, const ValueType& value)
 {
     if (pos < 0) {
-        assert(pos < 0);
+        throw std::runtime_error ("pos < 0");
     }
     else if (pos > this->_size) {
-        assert(pos > this->_size);
+        throw std::runtime_error ("pos > this->_size");
     }
 
     if (pos == 0) {
         pushFront(value);
     }
-    if (pos == _size - 1)
-        pushBack(value);
     else{
         Node* bufNode = this->_firstNode;
-        for (size_t i = 0; i < pos-1; ++i) {
+        for (size_t i = 0; i < pos - 1; i++) {
             bufNode = bufNode->next;
         }
         bufNode->insertNext(value);
-        ++_size;
+        _size++;
     }
 }
 
@@ -240,6 +273,7 @@ template<class ValueType>
 void LinkedList<ValueType>::insertAfterNode(Node* node, const ValueType& value)
 {
     node->insertNext(value);
+    this->_size++;
 }
 
 template<class ValueType>
@@ -251,9 +285,7 @@ void LinkedList<ValueType>::pushBack(const ValueType& value)
     }
     else
     {
-        Node *node = new Node(value, nullptr);
-        this->_lastNode->next = node;
-        this->_lastNode = _lastNode->next;
+        insert(_size, value);
     }
 }
 
@@ -261,8 +293,6 @@ template<class ValueType>
 void LinkedList<ValueType>::pushFront(const ValueType& value)
 {
     _firstNode = new Node(value, _firstNode);
-    if (_size == 0 )
-        _lastNode = _firstNode;
     ++_size;
 }
 
@@ -270,20 +300,16 @@ template<class ValueType>
 void LinkedList<ValueType>:: remove(const size_t pos)
 {
     if (pos < 0)
-        assert(pos< 0);
+        throw std::runtime_error("pos< 0");
 
     if (pos > this->_size)
-        assert(pos > this->_size);
+        throw std::runtime_error ("pos > this->_size");
     if (pos == 0) {
         removeFront();
     }
     else {
-        Node* node = this->_firstNode;
-        for (size_t i = 0; i < pos - 1; ++i) {
-            node = node->next;
-        }
-        node->removeNext();
-        this->_size--;
+        Node* node = getNode(pos - 1);
+        removeNextNode(node);
     }
 }
 template <class ValueType>
@@ -292,11 +318,16 @@ void LinkedList<ValueType>:: removeNextNode(Node* node)
     Node *deletedNode = node->next;
     node->next = node->next->next;
     delete deletedNode;
+    _size--;
 }
 
 template<class ValueType>
 void LinkedList<ValueType>::removeFront()
 {
+    if (_size == 0)
+    {
+        throw std::runtime_error("list is empty");
+    }
     Node *node = _firstNode;
     this->_firstNode = this->_firstNode->next;
     delete node;
@@ -311,14 +342,13 @@ void LinkedList<ValueType>:: removeBack()
     {
         node = node->next;
     }
-    delete this->_lastNode;
-    this->_lastNode = node;
-    this->_lastNode->next = nullptr;
-    this->_size--;
+    delete node->next;
+    node->next = nullptr;
+    _size--;
 }
 
 template<class ValueType>
-long long int LinkedList<ValueType>::findIndex(ValueType& value) const
+long long int LinkedList<ValueType>::findIndex(const ValueType& value) const
 {
     long long int i = 0;
     Node *currentNode = _firstNode;
@@ -326,22 +356,24 @@ long long int LinkedList<ValueType>::findIndex(ValueType& value) const
     {
         if (currentNode->value == value)
             return i;
+        i++;
+        currentNode = currentNode->next;
     }
-    std:: cout << "No Node" << std :: endl;
     return -1;
 }
 
 template<class ValueType>
-class LinkedList<ValueType>::Node* LinkedList<ValueType>::findNode(ValueType& value) const
+class LinkedList<ValueType>::Node* LinkedList<ValueType>::findNode(const ValueType& value) const
 {
-    long long int i = 0;
+    size_t i = 0;
     Node *currentNode = _firstNode;
     while (i < _size)
     {
         if (currentNode->value == value)
             return currentNode;
+        i++;
+        currentNode = currentNode->next;
     }
-    std:: cout << "No Node" << std :: endl;
     return nullptr;
 }
 template<class ValueType>
@@ -352,7 +384,6 @@ void LinkedList<ValueType>:: reverse()
     Node *nextNode = currentNode->next;
     _firstNode->next = nullptr;
     currentNode->next = previousNode;
-    _lastNode = _firstNode;
     while (nextNode->next != nullptr)
     {
         previousNode = currentNode;
@@ -377,9 +408,7 @@ LinkedList<ValueType> LinkedList<ValueType>:: reverse() const
 template<class ValueType>
 LinkedList<ValueType> LinkedList<ValueType>:: getReverseList() const
 {
-    LinkedList reversedList = *this;
-    reversedList.reverse();
-    return reversedList;
+    return this->reverse();
 }
 
 template<class ValueType>
